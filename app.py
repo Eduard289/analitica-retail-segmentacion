@@ -91,8 +91,8 @@ else:
     st.sidebar.markdown("### 📘 Documentación Estratégica")
     st.sidebar.info("Descubre la arquitectura técnica y el modelo de negocio detrás de este cuadro de mando.")
     
-    # Enlace interactivo al Pitch Deck (aquí colocarás tu URL de GitHub Pages una vez desplegado)
-    st.sidebar.link_button("Ver Presentación (Pitch Deck) ↗", "https://tu-usuario.github.io/tu-repositorio/presentacion.html")
+    # Enlace interactivo al Pitch Deck actualizado con tu URL real
+    st.sidebar.link_button("Ver Presentación (Pitch Deck) ↗", "https://eduard289.github.io/analitica-retail-segmentacion/presentacion.html")
 
     # --- ENCABEZADO PRINCIPAL ---
     st.title("📊 Retail Price & Stock Intelligence System")
