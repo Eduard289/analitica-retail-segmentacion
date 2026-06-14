@@ -208,14 +208,13 @@ else:
         df_historico_limpio = df_filtrado[["fecha", "tienda", "producto", "precio"]].sort_values(by="fecha", ascending=False)
         st.dataframe(df_historico_limpio, use_container_width=True, hide_index=True)
 
-        # NUEVO: PANEL DE ACCIONES OPERATIVAS E INFORMES EJECUTIVOS
+        # PANEL DE ACCIONES OPERATIVAS E INFORMES EJECUTIVOS
         st.markdown("#### 💼 Centro de Informes y KPIs Ejecutivos")
         st.write("Interactúa con los datos históricos para generar métricas avanzadas bajo demanda u obtener reportes exportables:")
         
         btn_col1, btn_col2, btn_col3 = st.columns(3)
         
         with btn_col1:
-            # Botón de descarga de datos formateado en formato CSV compatible con Excel
             csv_data = df_historico_limpio.to_csv(index=False).encode('utf-8')
             st.download_button(
                 label="📥 Descargar Informe Ejecutivo (CSV)",
@@ -298,7 +297,6 @@ else:
     # ==========================================
     # PESTAÑA 4: COMPARATIVA DE PRECIOS
     # ==========================================
-    with tab_comparativa = st.tabs... # El comportamiento interno de la pestaña 4 se mantiene robusto e intacto
     with tab_comparativa:
         st.markdown("### ⚔️ Matriz Avanzada de Competitividad Cruzada")
         
