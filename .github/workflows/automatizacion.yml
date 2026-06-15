@@ -2,9 +2,12 @@ name: Pipeline Automatizado de Extracción Retail
 
 on:
   schedule:
-    # Se ejecuta todos los días a las 07:00 UTC (8:00 AM o 9:00 AM en España según el horario de verano/invierno)
     - cron: '0 7 * * *'
-  workflow_dispatch: # Esto activa un botón manual en GitHub por si quieres probarlo ya
+  workflow_dispatch:
+
+# ESTA ES LA LÍNEA MÁGICA QUE SOLUCIONA EL ERROR 128 (Permisos de escritura)
+permissions:
+  contents: write
 
 jobs:
   build:
@@ -12,10 +15,10 @@ jobs:
 
     steps:
     - name: 1. Clonar el repositorio
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4 # Actualizado a v4 para quitar el warning
 
     - name: 2. Configurar el entorno de Python
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v5 # Actualizado a v5 para quitar el warning
       with:
         python-version: '3.10'
 
