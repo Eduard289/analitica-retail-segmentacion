@@ -116,11 +116,10 @@ else:
     st.sidebar.markdown("### 📘 Documentación Estratégica")
     st.sidebar.link_button("Ver Presentación (Pitch Deck) ↗", "https://eduard289.github.io/analitica-retail-segmentacion/presentacion.html")
     
-    # NUEVO: ETIQUETA DE AUTOMATIZACIÓN ETL PARA EL PORTFOLIO
     st.sidebar.markdown("""
         <div class="etl-status">
             <strong>⚙️ Estado del Pipeline (ETL)</strong><br>
-            Sistema de extracción 100% automatizado mediante <em>GitHub Actions</em>. Base de datos actualizada diariamente a las 07:00 AM (UTC) sin intervención manual.
+            Sistema de extracción automatizado mediante <em>GitHub Actions</em>. Base de datos actualizada diariamente a las 07:00 AM (UTC) sin intervención manual.
         </div>
     """, unsafe_allow_html=True)
 
@@ -149,6 +148,46 @@ else:
 
     bins_precio = [0, 10, 15, 20, 30, 50, 100]
     labels_precio = ['0-10€', '10-15€', '15-20€', '20-30€', '30-50€', '50€+']
+
+    # --- DEFINICIÓN DE VENTANAS EMERGENTES (MODALES CON 'X') ---
+    @st.dialog("📈 Pricing Drift (Volatilidad de Precios)")
+    def mostrar_pricing_drift():
+        st.markdown("**Análisis de Estabilidad de Precios:**")
+        for t in df_filtrado['tienda'].unique():
+            desviacion = df_filtrado[df_filtrado['tienda'] == t]['precio'].std()
+            st.info(f"• **{t}**: Desviación estándar de {desviacion:.2f} €.")
+
+    @st.dialog("📊 Share of Voice (Mix de Catálogo)")
+    def mostrar_share_of_voice():
+        st.markdown("**Distribución de Cuota de Mercado por SKUs:**")
+        total_skus = len(df_filtrado)
+        if total_skus > 0:
+            for t in df_filtrado['tienda'].unique():
+                porcentaje = (len(df_filtrado[df_filtrado['tienda'] == t]) / total_skus) * 100
+                st.success(f"• **{t}**: Representa el **{porcentaje:.1f}%** del mix total de productos.")
+
+    @st.dialog("🚨 Radar de Variaciones (Últimas 24h)")
+    def mostrar_radar_variaciones():
+        st.markdown("**Detectando fluctuaciones de precio respecto a la última extracción...**")
+        fechas = sorted(df_filtrado['fecha'].unique(), reverse=True)
+        
+        if len(fechas) >= 2:
+            fecha_hoy = fechas[0]
+            fecha_ayer = fechas[1]
+            
+            df_hoy = df_filtrado[df_filtrado['fecha'] == fecha_hoy][['tienda', 'producto', 'precio']]
+            df_ayer = df_filtrado[df_filtrado['fecha'] == fecha_ayer][['tienda', 'producto', 'precio']]
+            
+            df_cambios = pd.merge(df_hoy, df_ayer, on=['tienda', 'producto'], suffixes=(' Actual', ' Anterior'))
+            df_alertas = df_cambios[df_cambios['precio Actual'] != df_cambios['precio Anterior']].copy()
+            
+            if not df_alertas.empty:
+                df_alertas['Variación (€)'] = df_alertas['precio Actual'] - df_alertas['precio Anterior']
+                st.dataframe(df_alertas, use_container_width=True, hide_index=True)
+            else:
+                st.success("✅ Estabilidad de mercado: No se han detectado subidas ni bajadas de precio en el último ciclo.")
+        else:
+            st.warning("⚠️ Se necesitan al menos dos días de registros históricos para activar el radar comparativo.")
 
     # ==========================================
     # PESTAÑA 1: VISIÓN GLOBAL (HEAD-TO-HEAD)
@@ -191,7 +230,7 @@ else:
         df_historico_limpio = df_filtrado[["fecha", "tienda", "producto", "precio"]].sort_values(by="fecha", ascending=False)
         st.dataframe(df_historico_limpio, use_container_width=True, hide_index=True)
 
-        # PANEL DE ACCIONES OPERATIVAS Y NUEVO RADAR DE PRECIOS
+        # PANEL DE ACCIONES OPERATIVAS ACTUALIZADO CON VENTANAS EMERGENTES (MODALES)
         st.markdown("#### 💼 Centro de Informes y KPIs Ejecutivos")
         st.write("Interactúa con los datos históricos para generar métricas avanzadas y detectar alertas de mercado:")
         
@@ -204,42 +243,15 @@ else:
             
         with btn_col2:
             if st.button("📊 Calcular Pricing Drift (Volatilidad)", use_container_width=True):
-                for t in df_filtrado['tienda'].unique():
-                    desviacion = df_filtrado[df_filtrado['tienda'] == t]['precio'].std()
-                    st.info(f"• **{t}**: Desviación estándar de {desviacion:.2f} €.")
+                mostrar_pricing_drift()
                     
         with btn_col3:
             if st.button("📊 Analizar Share of Voice (Mix)", use_container_width=True):
-                total_skus = len(df_filtrado)
-                if total_skus > 0:
-                    for t in df_filtrado['tienda'].unique():
-                        porcentaje = (len(df_filtrado[df_filtrado['tienda'] == t]) / total_skus) * 100
-                        st.success(f"• **{t}**: Representa el **{porcentaje:.1f}%** del mix total de productos.")
+                mostrar_share_of_voice()
 
-        # NUEVA FUNCIÓN: RADAR DE VARIACIONES
         with btn_col4:
             if st.button("🚨 Radar de Variaciones (Últimas 24h)", use_container_width=True):
-                st.markdown("**Detectando fluctuaciones de precio respecto a la última extracción...**")
-                fechas = sorted(df_filtrado['fecha'].unique(), reverse=True)
-                
-                if len(fechas) >= 2:
-                    fecha_hoy = fechas[0]
-                    fecha_ayer = fechas[1]
-                    
-                    df_hoy = df_filtrado[df_filtrado['fecha'] == fecha_hoy][['tienda', 'producto', 'precio']]
-                    df_ayer = df_filtrado[df_filtrado['fecha'] == fecha_ayer][['tienda', 'producto', 'precio']]
-                    
-                    # Cruzar datos por producto para aislar las diferencias de precio
-                    df_cambios = pd.merge(df_hoy, df_ayer, on=['tienda', 'producto'], suffixes=(' Actual', ' Anterior'))
-                    df_alertas = df_cambios[df_cambios['precio Actual'] != df_cambios['precio Anterior']].copy()
-                    
-                    if not df_alertas.empty:
-                        df_alertas['Variación (€)'] = df_alertas['precio Actual'] - df_alertas['precio Anterior']
-                        st.dataframe(df_alertas, use_container_width=True, hide_index=True)
-                    else:
-                        st.success("✅ Estabilidad de mercado: No se han detectado subidas ni bajadas de precio en el último ciclo.")
-                else:
-                    st.warning("⚠️ Se necesitan al menos dos días de registros históricos para activar el radar comparativo.")
+                mostrar_radar_variaciones()
 
         # FICHA DE PRODUCTO INDIVIDUAL
         st.markdown("---")
@@ -278,7 +290,7 @@ else:
                         st.info("📌 Registro base inicial capturado. La gráfica de tendencia se trazará dinámicamente con la próxima extracción.")
 
     # ==========================================
-    # PESTAÑA 2, 3 Y 4 (SPRINGFIELD, RENATTA Y COMPARATIVA MANTIENEN SU ESTRUCTURA)
+    # PESTAÑA 2, 3 Y 4
     # ==========================================
     with tab_spf:
         st.markdown("### 🎯 Métricas de Pricing: Springfield")
