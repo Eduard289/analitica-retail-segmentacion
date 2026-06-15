@@ -1,0 +1,35 @@
+name: Pipeline Automatizado de Extracción Retail
+
+on:
+  schedule:
+    # Se ejecuta todos los días a las 07:00 UTC (8:00 AM o 9:00 AM en España según el horario de verano/invierno)
+    - cron: '0 7 * * *'
+  workflow_dispatch: # Esto activa un botón manual en GitHub por si quieres probarlo ya
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: 1. Clonar el repositorio
+      uses: actions/checkout@v3
+
+    - name: 2. Configurar el entorno de Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.10'
+
+    - name: 3. Instalar dependencias del sistema
+      run: |
+        python -m pip install --upgrade pip
+        if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+
+    - name: 4. Ejecutar el Extractor de Precios y Stock
+      run: python extractor.py
+
+    - name: 5. Guardar cambios en la Base de Datos de GitHub
+      run: |
+        git config --global user.name "github-actions[bot]"
+        git config --global user.email "github-actions[bot]@users.noreply.github.com"
+        git add retail_history.db
+        git diff --quiet && git diff --staged --quiet || (git commit -m "Pipeline: Actualización diaria de precios e histórico transaccional" && git push)
